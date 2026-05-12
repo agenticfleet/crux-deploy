@@ -13,8 +13,8 @@ ghcr.io/agenticfleet/crux-console
 ghcr.io/agenticfleet/crux-cli
 ```
 
-The current component images are scaffold images until runtime implementation lands.
-The compose shape, image names, tags, ports, and docs are established now so self-hosted deployment remains stable as the services become functional.
+Most component images are scaffold images until their runtime implementations land.
+`crux-mcp-gateway` now runs the Go MCP governance runtime with API-key auth, policy enforcement, audit persistence, and metrics on port `7702`.
 
 ## Quick start
 

@@ -18,6 +18,18 @@ Never commit `.env`.
 | `OPENAI_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
 | `ANTHROPIC_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
 | `GOOGLE_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
+| `CRUX_MCP_GATEWAY_API_KEYS` | `change-me,selfhosted-admin,selfhosted,admin,codex` | API keys in `token,principal,workspace,role,agent_family[,user]` records. Replace before exposing the gateway. |
+| `CRUX_MCP_GATEWAY_DEFAULT_POLICY_EFFECT` | `deny` | MCP gateway fail-closed default policy posture. |
+| `CRUX_MCP_GATEWAY_BOOTSTRAP_ALLOW_TOOLS` | empty | Optional comma-separated tool allowlist for smoke tests. |
+| `CRUX_MCP_GATEWAY_DEFAULT_ADAPTER_ID` | `echo` | Default adapter for tool calls that omit an adapter. |
+| `CRUX_MCP_GATEWAY_ALLOW_SHELL_ADAPTER` | `false` | Enables shell subprocess adapters. |
+| `CRUX_MCP_GATEWAY_AUDIT_SIGNING_KEY` | empty | HMAC key for tamper-evident audit signatures. |
+| `CRUX_MCP_GATEWAY_REQUIRE_AUDIT_SIGNATURE` | `false` | Requires the signing key before startup. |
+| `CRUX_MCP_GATEWAY_DEFAULT_WORKSPACE_BUDGET_USD` | `100` | Default workspace tool-call budget. |
+| `CRUX_MCP_GATEWAY_COST_PER_1K_TOKENS_USD` | `0.001` | Cost estimate multiplier. |
+| `CRUX_MCP_GATEWAY_CONTEXT_BUDGET_BYTES` | `65536` | Context packing budget. |
+| `CRUX_MCP_GATEWAY_PROMPT_INJECTION_PHRASES` | built-in phrases | Comma-separated scanner phrases. |
+| `CRUX_MCP_GATEWAY_REPLAY_DRY_RUN_ONLY` | `true` | Keeps replay from performing outbound side effects. |
 | `CRUX_CONSOLE_AUTH_MODE` | `none` | Reserved for console authentication implementation. |
 
 ## Validate

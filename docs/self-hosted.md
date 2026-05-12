@@ -3,7 +3,7 @@
 This repository provides the Docker Compose deployment surface for Crux Control.
 
 The compose file pulls images from GitHub Container Registry.
-The first images are scaffolds while the runtime implementation lands, but the deployment contract is fixed around the service names, image names, ports, and environment variables below.
+Some component images are still scaffolds while runtime implementation lands, but `crux-mcp-gateway` now starts a working MCP governance runtime.
 
 ## Requirements
 
@@ -30,7 +30,8 @@ docker compose --env-file .env down
 ## Data
 
 Postgres data is stored in the `postgres-data` named volume.
-Do not remove this volume unless you intentionally want to delete control-plane state.
+MCP gateway audit events are stored in the `mcp-audit-data` named volume.
+Do not remove these volumes unless you intentionally want to delete control-plane state or replayable audit history.
 
 ## Version Pinning
 

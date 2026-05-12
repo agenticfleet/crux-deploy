@@ -22,6 +22,5 @@
 
 ## Current State
 
-The component repositories currently publish scaffold images.
-They are useful for validating image distribution, compose wiring, and release automation.
-Runtime behavior lands in the service repositories and will replace the scaffold image commands directly.
+`crux-mcp-gateway` now publishes a runtime image. Other component repositories may still publish scaffold images while their service implementations land.
+The scaffold images remain useful for validating image distribution, compose wiring, and release automation.
