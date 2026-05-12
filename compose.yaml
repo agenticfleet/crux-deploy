@@ -1,0 +1,108 @@
+name: crux
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-crux}
+      POSTGRES_USER: ${POSTGRES_USER:-crux}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crux} -d ${POSTGRES_DB:-crux}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - crux
+
+  crux-server:
+    image: ghcr.io/agenticfleet/crux-server:${CRUX_VERSION:-main}
+    restart: unless-stopped
+    environment:
+      CRUX_SERVER_LISTEN_ADDR: 0.0.0.0
+      CRUX_SERVER_PORT: 7700
+      CRUX_STORE_BACKEND: postgres
+      CRUX_POSTGRES_DSN: postgres://${POSTGRES_USER:-crux}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-crux}
+    ports:
+      - "${CRUX_SERVER_PORT:-7700}:7700"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - crux
+
+  crux-worker:
+    image: ghcr.io/agenticfleet/crux-worker:${CRUX_VERSION:-main}
+    restart: unless-stopped
+    environment:
+      CRUX_SERVER_URL: http://crux-server:7700
+      CRUX_WORKER_ID: ${CRUX_WORKER_ID:-selfhosted-worker-1}
+      CRUX_WORKER_CONCURRENCY: ${CRUX_WORKER_CONCURRENCY:-2}
+    depends_on:
+      - crux-server
+    networks:
+      - crux
+
+  crux-gateway:
+    image: ghcr.io/agenticfleet/crux-gateway:${CRUX_VERSION:-main}
+    restart: unless-stopped
+    environment:
+      CRUX_SERVER_URL: http://crux-server:7700
+      CRUX_GATEWAY_LISTEN_ADDR: 0.0.0.0
+      CRUX_GATEWAY_PORT: 7701
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+    ports:
+      - "${CRUX_GATEWAY_PORT:-7701}:7701"
+    depends_on:
+      - crux-server
+    networks:
+      - crux
+
+  crux-mcp-gateway:
+    image: ghcr.io/agenticfleet/crux-mcp-gateway:${CRUX_VERSION:-main}
+    restart: unless-stopped
+    environment:
+      CRUX_SERVER_URL: http://crux-server:7700
+      CRUX_MCP_GATEWAY_LISTEN_ADDR: 0.0.0.0
+      CRUX_MCP_GATEWAY_PORT: 7702
+    ports:
+      - "${CRUX_MCP_GATEWAY_PORT:-7702}:7702"
+    depends_on:
+      - crux-server
+    networks:
+      - crux
+
+  crux-console:
+    image: ghcr.io/agenticfleet/crux-console:${CRUX_VERSION:-main}
+    restart: unless-stopped
+    environment:
+      CRUX_CONSOLE_API_URL: http://crux-server:7700
+      CRUX_CONSOLE_AUTH_MODE: ${CRUX_CONSOLE_AUTH_MODE:-none}
+      CRUX_CONSOLE_PORT: 7780
+    ports:
+      - "${CRUX_CONSOLE_PORT:-7780}:7780"
+    depends_on:
+      - crux-server
+    networks:
+      - crux
+
+  crux-cli:
+    image: ghcr.io/agenticfleet/crux-cli:${CRUX_VERSION:-main}
+    profiles:
+      - tools
+    environment:
+      CRUX_SERVER_URL: http://crux-server:7700
+    networks:
+      - crux
+
+volumes:
+  postgres-data:
+
+networks:
+  crux:
+    driver: bridge

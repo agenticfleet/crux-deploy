@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository
+        run: |
+          set -euo pipefail
+          for file in README.md CHANGELOG.md RELEASES.md compose.yaml .env.example docs/self-hosted.md docs/images.md docs/configuration.md docs/releases.md; do
+            test -s "$file"
+          done
+          docker compose --env-file .env.example config >/tmp/crux-compose.yaml
+          if grep -RInE '\bJoch\b|jochai|PeasantsAI|peasantsai|cruxcontrol' --exclude-dir=.git --exclude=ci.yml .; then
+            echo "Deprecated naming found." >&2
+            exit 1
+          fi
