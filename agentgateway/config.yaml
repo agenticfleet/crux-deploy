@@ -1,0 +1,15 @@
+# agentgateway bootstrap config for Crux Control V0.1
+#
+# This is the minimal static configuration. crux-server's agentgateway adapter
+# pushes the real listener/route/backend configuration at runtime via the admin
+# API at http://agentgateway:8080.
+
+admin:
+  listen: 0.0.0.0:8080
+
+logging:
+  level: info
+
+static_resources:
+  listeners: []
+  clusters: []
