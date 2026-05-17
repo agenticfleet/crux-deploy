@@ -10,18 +10,47 @@ permissions:
   contents: read
 
 jobs:
-  compose:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate repository
+      - name: Validate repository files
         run: |
           set -euo pipefail
-          for file in README.md CHANGELOG.md RELEASES.md compose.yaml .env.example docs/self-hosted.md docs/images.md docs/configuration.md docs/releases.md; do
-            test -s "$file"
+          for file in README.md CHANGELOG.md RELEASES.md compose.yaml .env.example \
+                      agentgateway/config.yaml docs/deployment-guide.md \
+                      scripts/smoke.sh scripts/wait-for.sh Makefile; do
+            test -s "$file" || { echo "Missing or empty: $file" >&2; exit 1; }
           done
-          docker compose --env-file .env.example config >/tmp/crux-compose.yaml
-          if grep -RInE '\bJoch\b|jochai|PeasantsAI|peasantsai|cruxcontrol' --exclude-dir=.git --exclude=ci.yml .; then
-            echo "Deprecated naming found." >&2
+      - name: Validate compose config
+        run: docker compose --env-file .env.example config > /dev/null
+      - name: Check for deprecated naming
+        run: |
+          if grep -RInE '\bJoch\b|jochai|PeasantsAI|peasantsai|cruxcontrol|crux-mcp-gateway' \
+               --exclude-dir=.git --exclude='ci.yml' .; then
+            echo "Deprecated naming or removed service found." >&2
             exit 1
           fi
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate .env from example
+        run: cp .env.example .env
+      - name: Bring up the stack
+        run: docker compose --env-file .env up -d --wait --wait-timeout 120
+      - name: Run smoke test
+        run: ./scripts/smoke.sh
+      - name: Capture logs on failure
+        if: failure()
+        run: docker compose --env-file .env logs > stack.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: stack-logs
+          path: stack.log
+      - name: Tear down
+        if: always()
+        run: docker compose --env-file .env down -v
