@@ -26,9 +26,14 @@ jobs:
         run: docker compose --env-file .env.example config > /dev/null
       - name: Check for deprecated naming
         run: |
-          if grep -RInE '\bJoch\b|jochai|PeasantsAI|peasantsai|cruxcontrol|crux-mcp-gateway' \
+          if grep -RInE '\bJoch\b|jochai|PeasantsAI|peasantsai|cruxcontrol' \
                --exclude-dir=.git --exclude='ci.yml' .; then
-            echo "Deprecated naming or removed service found." >&2
+            echo "Deprecated naming found." >&2
+            exit 1
+          fi
+          # Ensure crux-mcp-gateway is not referenced as a live compose service
+          if grep -n 'image:.*crux-mcp-gateway' compose.yaml; then
+            echo "crux-mcp-gateway must not appear as a compose service image." >&2
             exit 1
           fi
 

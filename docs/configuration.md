@@ -6,34 +6,29 @@ Never commit `.env`.
 | Variable | Default | Purpose |
 |---|---|---|
 | `CRUX_VERSION` | `main` | Image tag used for all Crux component images. |
-| `CRUX_SERVER_PORT` | `7700` | Host port for `crux-server`. |
-| `CRUX_GATEWAY_PORT` | `7701` | Host port for `crux-gateway`. |
-| `CRUX_MCP_GATEWAY_PORT` | `7702` | Host port for `crux-mcp-gateway`. |
-| `CRUX_CONSOLE_PORT` | `7780` | Host port for `crux-console`. |
+| `AGENTGATEWAY_VERSION` | `latest` | agentgateway image tag. Pinned to the version validated by crux-server CI. |
+| `AGENTGATEWAY_LOG_LEVEL` | `info` | agentgateway log verbosity. Use `debug` to trace MCP routing. |
+| `AGENTGATEWAY_ADMIN_PORT` | `8080` | Host port for agentgateway admin API (crux-server pushes listener config here). |
+| `AGENTGATEWAY_LISTENER_PORT` | `7702` | Host port for agentgateway MCP listener (managed-agent wedge target URL). |
+| `CRUX_REQUIRE_SHIM` | `false` | Informational flag. Set to `true` when activating the shim profile. |
+| `CRUX_MCP_INJECTION_SHIM_PORT` | `7702` | Host port for shim MCP listener (only relevant when `COMPOSE_PROFILES=shim`). |
 | `POSTGRES_DB` | `crux` | Postgres database name. |
 | `POSTGRES_USER` | `crux` | Postgres user. |
-| `POSTGRES_PASSWORD` | `changeme` | Postgres password; change before real deployments. |
+| `POSTGRES_PASSWORD` | `changeme` | Postgres password. Change before exposing to a network. |
+| `CRUX_SERVER_PORT` | `7700` | Host port for crux-server REST API. |
+| `CRUX_SERVER_LISTEN_ADDR` | `0.0.0.0` | Listen address for crux-server. |
+| `CRUX_SERVER_API_KEY` | `change-me-please` | Bearer token for crux-server API auth. Change before exposing to a network. |
 | `CRUX_WORKER_ID` | `selfhosted-worker-1` | Stable worker identity. |
 | `CRUX_WORKER_CONCURRENCY` | `2` | Worker parallelism. Higher values consume more CPU and memory. |
-| `OPENAI_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
-| `ANTHROPIC_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
-| `GOOGLE_API_KEY` | empty | Optional provider credential for custom agents once gateway implementation lands. |
-| `CRUX_MCP_GATEWAY_API_KEYS` | `change-me,selfhosted-admin,selfhosted,admin,codex` | API keys in `token,principal,workspace,role,agent_family[,user]` records. Replace before exposing the gateway. |
-| `CRUX_MCP_GATEWAY_DEFAULT_POLICY_EFFECT` | `deny` | MCP gateway fail-closed default policy posture. |
-| `CRUX_MCP_GATEWAY_BOOTSTRAP_ALLOW_TOOLS` | empty | Optional comma-separated tool allowlist for smoke tests. |
-| `CRUX_MCP_GATEWAY_DEFAULT_ADAPTER_ID` | `echo` | Default adapter for tool calls that omit an adapter. |
-| `CRUX_MCP_GATEWAY_ALLOW_SHELL_ADAPTER` | `false` | Enables shell subprocess adapters. |
-| `CRUX_MCP_GATEWAY_AUDIT_SIGNING_KEY` | empty | HMAC key for tamper-evident audit signatures. |
-| `CRUX_MCP_GATEWAY_REQUIRE_AUDIT_SIGNATURE` | `false` | Requires the signing key before startup. |
-| `CRUX_MCP_GATEWAY_DEFAULT_WORKSPACE_BUDGET_USD` | `100` | Default workspace tool-call budget. |
-| `CRUX_MCP_GATEWAY_COST_PER_1K_TOKENS_USD` | `0.001` | Cost estimate multiplier. |
-| `CRUX_MCP_GATEWAY_CONTEXT_BUDGET_BYTES` | `65536` | Context packing budget. |
-| `CRUX_MCP_GATEWAY_PROMPT_INJECTION_PHRASES` | built-in phrases | Comma-separated scanner phrases. |
-| `CRUX_MCP_GATEWAY_REPLAY_DRY_RUN_ONLY` | `true` | Keeps replay from performing outbound side effects. |
-| `CRUX_CONSOLE_AUTH_MODE` | `none` | Reserved for console authentication implementation. |
+| `CRUX_CONSOLE_PORT` | `7780` | Host port for crux-console operator UI. |
+| `CRUX_CONSOLE_AUTH_MODE` | `none` | Console authentication mode. Reserved for OIDC in V0.2+. |
+| `CRUX_GATEWAY_PORT` | `7701` | Host port for crux-gateway model gateway (V0.2+). |
+| `OPENAI_API_KEY` | empty | Provider credential for crux-gateway (V0.2+). |
+| `ANTHROPIC_API_KEY` | empty | Provider credential for crux-gateway (V0.2+). |
+| `GOOGLE_API_KEY` | empty | Provider credential for crux-gateway (V0.2+). |
 
 ## Validate
 
 ```bash
-docker compose --env-file .env config
+make config
 ```

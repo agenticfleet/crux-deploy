@@ -2,36 +2,37 @@
 
 This repository provides the Docker Compose deployment surface for Crux Control.
 
-The compose file pulls images from GitHub Container Registry.
-Some component images are still scaffolds while runtime implementation lands, but `crux-mcp-gateway` now starts a working MCP governance runtime.
+The compose file pulls images from GitHub Container Registry. V0.1 uses
+`agentgateway` as the data plane for the managed-agent wedge demo. See
+[docs/deployment-guide.md](deployment-guide.md) for the full install and
+operations guide.
 
 ## Requirements
 
 - Docker Engine with the Compose plugin.
-- Network egress to `ghcr.io`.
+- Network egress to `ghcr.io` and `ghcr.io/agentgateway`.
 - A local `.env` created from `.env.example`.
 
 ## Start
 
 ```bash
 cp .env.example .env
-docker compose --env-file .env config
-docker compose --env-file .env pull
-docker compose --env-file .env up -d
-docker compose --env-file .env ps
+# Edit .env: set CRUX_SERVER_API_KEY at minimum.
+make up
+make smoke
 ```
 
 ## Stop
 
 ```bash
-docker compose --env-file .env down
+make down
 ```
 
 ## Data
 
 Postgres data is stored in the `postgres-data` named volume.
-MCP gateway audit events are stored in the `mcp-audit-data` named volume.
-Do not remove these volumes unless you intentionally want to delete control-plane state or replayable audit history.
+Do not remove this volume unless you intentionally want to delete
+control-plane state.
 
 ## Version Pinning
 
