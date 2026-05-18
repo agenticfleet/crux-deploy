@@ -1,15 +1,23 @@
-# agentgateway bootstrap config for Crux Control V0.1
+# agentgateway v0.12.0 bootstrap config for Crux Control V0.1
 #
-# This is the minimal static configuration. crux-server's agentgateway adapter
-# pushes the real listener/route/backend configuration at runtime via the admin
-# API at http://agentgateway:8080.
+# agentgateway v0.12.0 uses a "binds" top-level config shape.
+# The admin API listens on ADMIN_ADDR (set via env to 0.0.0.0:15000).
+# crux-server pushes live MCP target config to POST /config on that admin port.
+#
+# NOTE: listener port 7702 must be declared here at startup; agentgateway v0.12.0
+# cannot open new ports dynamically via POST /config after boot.
+# crux-server pushes the same bind with updated backends (targets) via POST /config.
 
-admin:
-  listen: 0.0.0.0:8080
-
-logging:
-  level: info
-
-static_resources:
-  listeners: []
-  clusters: []
+binds:
+- port: 7702
+  listeners:
+  - name: crux-mcp
+    protocol: HTTP
+    routes:
+    - hostnames: []
+      matches:
+      - path:
+          pathPrefix: /
+      backends:
+      - mcp:
+          targets: []

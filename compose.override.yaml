@@ -1,0 +1,26 @@
+# compose.override.yaml — local build fallback for pre-GHCR-publish bring-up
+# Adds build: blocks so "docker compose up --build" builds images locally
+# when ghcr.io/agenticfleet/* images aren't yet published.
+# crux-worker requires context at the parent directory (sibling to crux-server)
+# because its Dockerfile copies ../crux-server via a Go replace directive.
+
+services:
+  crux-server:
+    build:
+      context: ../crux-server
+      dockerfile: Dockerfile
+
+  crux-worker:
+    build:
+      context: ../
+      dockerfile: crux-worker/Dockerfile
+
+  crux-console:
+    build:
+      context: ../crux-console
+      dockerfile: Dockerfile
+
+  crux-gateway:
+    build:
+      context: ../crux-gateway
+      dockerfile: Dockerfile

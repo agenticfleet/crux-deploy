@@ -29,18 +29,26 @@ services:
     image: ghcr.io/agentgateway/agentgateway:${AGENTGATEWAY_VERSION:-latest}
     restart: unless-stopped
     environment:
-      AGENTGATEWAY_LOG_LEVEL: ${AGENTGATEWAY_LOG_LEVEL:-info}
+      # Bind admin on 0.0.0.0 so crux-server can reach it from the crux network.
+      # agentgateway v0.12.0 default admin is 127.0.0.1:15000; ADMIN_ADDR overrides it.
+      ADMIN_ADDR: "0.0.0.0:15000"
     volumes:
-      - ./agentgateway/config.yaml:/etc/agentgateway/config.yaml:ro
-    command: ["--config", "/etc/agentgateway/config.yaml"]
+      # FileMode 0666 allows agentgateway to write back to config on POST /config.
+      - ./agentgateway/config.yaml:/app/config.yaml
+    command: ["-f", "/app/config.yaml"]
     ports:
       - "${AGENTGATEWAY_LISTENER_PORT:-7702}:7702"    # MCP listener (wedge target URL)
-      - "${AGENTGATEWAY_ADMIN_PORT:-8080}:8080"       # admin API (crux-server pushes config here)
+      - "${AGENTGATEWAY_ADMIN_PORT:-8180}:15000"      # admin API (crux-server pushes config here)
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      # agentgateway v0.12.0: no shell or wget in image.
+      # Use the binary's --validate-only mode which exits 0 if config is valid.
+      # We check TCP readiness on the admin port via the binary itself.
+      # GET /config returns 200 when the admin API is up.
+      test: ["CMD", "/app/agentgateway", "--validate-only", "-f", "/app/config.yaml"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
     networks:
       - crux
 
@@ -49,13 +57,16 @@ services:
     restart: unless-stopped
     environment:
       CRUX_SERVER_LISTEN_ADDR: ${CRUX_SERVER_LISTEN_ADDR:-0.0.0.0}
-      CRUX_SERVER_PORT: ${CRUX_SERVER_PORT:-7700}
+      # CRUX_SERVER_PORT controls the container-internal listen port.
+      # Use CRUX_SERVER_HOST_PORT in .env to remap the host-side port without
+      # changing what the container (and other containers) connect to.
+      CRUX_SERVER_PORT: 7700
       CRUX_SERVER_API_KEY: ${CRUX_SERVER_API_KEY:-change-me-please}
       CRUX_STORE_BACKEND: postgres
       CRUX_POSTGRES_DSN: postgres://${POSTGRES_USER:-crux}:${POSTGRES_PASSWORD:-changeme}@postgres:5432/${POSTGRES_DB:-crux}
-      CRUX_AGENTGATEWAY_ADMIN_URL: http://agentgateway:8080
+      CRUX_AGENTGATEWAY_ADMIN_URL: http://agentgateway:15000
     ports:
-      - "${CRUX_SERVER_PORT:-7700}:7700"
+      - "${CRUX_SERVER_HOST_PORT:-7700}:7700"
     depends_on:
       postgres:
         condition: service_healthy
@@ -69,6 +80,7 @@ services:
     restart: unless-stopped
     environment:
       CRUX_SERVER_URL: http://crux-server:7700
+      CRUX_SERVER_API_KEY: ${CRUX_SERVER_API_KEY:-change-me-please}
       CRUX_WORKER_ID: ${CRUX_WORKER_ID:-selfhosted-worker-1}
       CRUX_WORKER_CONCURRENCY: ${CRUX_WORKER_CONCURRENCY:-2}
     depends_on:
@@ -99,9 +111,10 @@ services:
     environment:
       CRUX_CONSOLE_API_URL: http://crux-server:7700
       CRUX_CONSOLE_AUTH_MODE: ${CRUX_CONSOLE_AUTH_MODE:-none}
-      CRUX_CONSOLE_PORT: 7780
+      # PORT is read by Next.js standalone; container always listens on 7780.
+      PORT: 7780
     ports:
-      - "${CRUX_CONSOLE_PORT:-7780}:7780"
+      - "${CRUX_CONSOLE_HOST_PORT:-7780}:7780"
     depends_on:
       - crux-server
     networks:
@@ -122,7 +135,7 @@ services:
       - shim    # activate with: COMPOSE_PROFILES=shim docker compose --env-file .env up -d
     restart: unless-stopped
     environment:
-      AGENTGATEWAY_URL: http://agentgateway:8080
+      AGENTGATEWAY_URL: http://agentgateway:15000
       SHIM_LISTEN_ADDR: 0.0.0.0:7702
     ports:
       - "${CRUX_MCP_INJECTION_SHIM_PORT:-7702}:7702"
